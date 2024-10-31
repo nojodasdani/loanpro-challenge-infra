@@ -1,0 +1,72 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: LoanPro Chanllenge CloudFormation stack
+
+Parameters:
+  Project:
+    Type: String
+    Description: Project name to prefix resource names
+    Default: "loanpro-challenge"
+
+  Environment:
+    Type: String
+    Description: Environment (e.g., dev, prod) to suffix resource names
+    Default: "dev"
+
+Resources:
+  OriginAccessIdentityStack:
+    Type: "AWS::CloudFormation::Stack"
+    Properties:
+      TemplateURL: "./oai.yaml"
+
+  S3BucketStack:
+    Type: "AWS::CloudFormation::Stack"
+    Properties:
+      TemplateURL: "./s3.yaml"
+      Parameters:
+        Project: !Ref Project
+        Environment: !Ref Environment
+        CloudFrontOAIArn: !GetAtt OriginAccessIdentityStack.Outputs.CloudFrontOAIArn
+
+  CloudFrontStack:
+    Type: "AWS::CloudFormation::Stack"
+    Properties:
+      TemplateURL: "./cloudfront.yaml"
+      Parameters:
+        Project: !Ref Project
+        Environment: !Ref Environment
+        S3BucketName: !GetAtt S3BucketStack.Outputs.BucketName
+        CloudFrontOAIId: !GetAtt OriginAccessIdentityStack.Outputs.CloudFrontOAIId
+
+  DynamoDBStack:
+    Type: "AWS::CloudFormation::Stack"
+    Properties:
+      TemplateURL: "./dynamo.yaml"
+      Parameters:
+        Project: !Ref Project
+        Environment: !Ref Environment
+
+Outputs:
+  # Consolidated Outputs from Nested Stacks
+  S3BucketName:
+    Description: Name of the S3 bucket used to store the web app
+    Value: !GetAtt S3BucketStack.Outputs.BucketName
+
+  CloudFrontDomain:
+    Description: CloudFront distribution domain name
+    Value: !GetAtt CloudFrontStack.Outputs.CloudFrontDomain
+
+  CloudFrontOAIId:
+    Description: Origin Access Identity ID for CloudFront
+    Value: !GetAtt OriginAccessIdentityStack.Outputs.CloudFrontOAIId
+
+  DynamoDBTableName:
+    Description: Name of the DynamoDB table
+    Value: !GetAtt DynamoDBStack.Outputs.TableName
+
+  DynamoDBTableArn:
+    Description: ARN of the DynamoDB table
+    Value: !GetAtt DynamoDBStack.Outputs.TableArn
+
+  WAFId:
+    Description: ID of the Web Application Firewall associated with CloudFront
+    Value: !GetAtt CloudFrontStack.Outputs.WebACLId

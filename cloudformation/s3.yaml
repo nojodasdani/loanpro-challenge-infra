@@ -1,0 +1,57 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: S3 Bucket Stack to store the web application bundle
+
+Parameters:
+  Project:
+    Type: String
+    Description: Project name to prefix resource names
+
+  Environment:
+    Type: String
+    Description: Environment (e.g., dev, prod) to suffix resource names
+
+  CloudFrontOAI:
+    Type: String
+    Description: The CloudFront Origin Access Identity for accessing the S3 bucket
+
+Resources:
+  WebAppBucket:
+    Type: "AWS::S3::Bucket"
+    Properties:
+      BucketName: !Sub "${Project}-${Environment}-frontend"
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+
+  WebAppBucketPolicy:
+    Type: "AWS::S3::BucketPolicy"
+    Properties:
+      Bucket: !Ref WebAppBucket
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Sub "arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity ${CloudFrontOAI}"
+            Action: "s3:GetObject"
+            Resource: !Sub "${WebAppBucket.Arn}/*"
+    
+  CloudFrontLogsBucket:
+    Type: "AWS::S3::Bucket"
+    Properties:
+      BucketName: !Sub "${Project}-${Environment}-cloudfront-logs"
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+
+Outputs:
+  BucketName:
+    Description: Name of the S3 bucket
+    Value: !Ref WebAppBucket
+  LogsBucketName:
+    Description: Name of the S3 bucket that will be used to store CloudFront logs
+    Value: !Ref CloudFrontLogsBucket

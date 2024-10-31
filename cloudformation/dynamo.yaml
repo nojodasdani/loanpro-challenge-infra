@@ -1,0 +1,57 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: DynamoDB Table Stack
+
+Parameters:
+  Project:
+    Type: String
+    Description: Project name to prefix resource names
+
+  Environment:
+    Type: String
+    Description: Environment (e.g., dev, prod) to suffix resource names
+
+Resources:
+  DynamoTable:
+    Type: "AWS::DynamoDB::Table"
+    Properties:
+      TableName: !Sub "${Project}-${Environment}-table"
+      AttributeDefinitions:
+        - AttributeName: "PK"
+          AttributeType: "S"
+        - AttributeName: "LSI1"
+          AttributeType: "S"
+      KeySchema:
+        - AttributeName: "PartitionKey"
+          KeyType: "HASH"
+      LocalSecondaryIndexes:
+        - IndexName: "LocalIndex"
+          KeySchema:
+            - AttributeName: "PK"
+              KeyType: "HASH"
+            - AttributeName: "LSI1"
+              KeyType: "RANGE"
+          Projection:
+            ProjectionType: "ALL"
+      BillingMode: PAY_PER_REQUEST
+      SSESpecification:
+        SSEEnabled: true
+
+  TableReadCapacityAlarm:
+    Type: "AWS::CloudWatch::Alarm"
+    Properties:
+      AlarmDescription: "Alarm if DynamoDB read capacity exceeds threshold"
+      MetricName: "ConsumedReadCapacityUnits"
+      Namespace: "AWS/DynamoDB"
+      Statistic: "Sum"
+      Period: 60
+      EvaluationPeriods: 1
+      Threshold: 100
+      ComparisonOperator: "GreaterThanOrEqualToThreshold"
+      Dimensions:
+        - Name: "TableName"
+          Value: !Ref DynamoTable
+
+Outputs:
+  TableName:
+    Description: Name of the DynamoDB table
+    Value: !Ref DynamoTable

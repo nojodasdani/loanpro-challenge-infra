@@ -1,0 +1,17 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: CloudFront Origin Access Identity Stack
+
+Resources:
+  CloudFrontOAI:
+    Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
+    Properties:
+      CloudFrontOriginAccessIdentityConfig:
+        Comment: Access identity for S3 bucket
+
+Outputs:
+  CloudFrontOAIId:
+    Description: Origin Access Identity ID for CloudFront
+    Value: !Ref CloudFrontOAI
+  CloudFrontOAIArn:
+    Description: ARN of the Origin Access Identity
+    Value: !GetAtt CloudFrontOAI.S3CanonicalUserId
