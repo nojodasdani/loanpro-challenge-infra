@@ -11,35 +11,17 @@ Parameters:
   S3BucketName:
     Type: String
     Description: Name of the S3 bucket to serve via CloudFront
-  S3LogsBucketName:
+  S3BucketDomainName:
+    Type: String
+    Description: Domain Name of the S3 bucket to serve
+  S3LogsBucketArn:
     Type: String
     Description: Name of the S3 bucket to save CloudFront logs
-  CloudFrontOAIId:
+  CloudFrontOAI:
     Type: String
     Description: The Origin Access Identity ID for the CloudFront distribution to access the S3 bucket
 
 Resources:
-  WebAppDistribution:
-    Type: "AWS::CloudFront::Distribution"
-    Properties:
-      DistributionConfig:
-        Origins:
-          - Id: S3Origin
-            DomainName: !Sub "${S3BucketName}.s3.amazonaws.com"
-            S3OriginConfig:
-              OriginAccessIdentity: !Sub "origin-access-identity/cloudfront/${CloudFrontOAIId}"
-        DefaultCacheBehavior:
-          TargetOriginId: S3Origin
-          ViewerProtocolPolicy: redirect-to-https
-          AllowedMethods: ["GET", "HEAD"]
-        Enabled: true
-        WebACLId: !Ref WebACL
-        Logging:
-          Bucket: "cloudfront-logs-bucket-unique-name.s3.amazonaws.com"
-        PriceClass: PriceClass_100
-      ViewerCertificate:
-        CloudFrontDefaultCertificate: true
-
   WebACL:
     Type: "AWS::WAFv2::WebACL"
     Properties:
@@ -51,6 +33,37 @@ Resources:
         CloudWatchMetricsEnabled: true
         MetricName: "WebACL"
       Rules: []
+
+  WebAppDistribution:
+    Type: "AWS::CloudFront::Distribution"
+    Properties:
+      DistributionConfig:
+        CustomErrorResponses:
+          - ErrorCachingMinTTL: 10
+            ErrorCode: 403
+            ResponseCode: 200
+            ResponsePagePath: /index.html
+        DefaultCacheBehavior:
+            AllowedMethods: ["GET", "HEAD"]
+            CachePolicyId: "658327ea-f89d-4fab-a63d-7e88639e58f6" # CachingOptimized id
+            Compress: true
+            TargetOriginId: S3Origin
+            ViewerProtocolPolicy: redirect-to-https
+        DefaultRootObject: index.html
+        Enabled: true
+        HttpVersion: http2
+        Logging:
+          Bucket: !Ref S3LogsBucketArn
+        Origins:
+          - DomainName: !Ref S3BucketDomainName
+            Id: S3Origin
+            S3OriginConfig:
+              OriginAccessIdentity: !Sub "origin-access-identity/cloudfront/${CloudFrontOAI}"
+        
+        PriceClass: PriceClass_100
+        ViewerCertificate:
+          CloudFrontDefaultCertificate: true
+        WebACLId: !GetAtt WebACL.Arn
 
 Outputs:
   CloudFrontDomain:

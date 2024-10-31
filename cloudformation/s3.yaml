@@ -49,9 +49,15 @@ Resources:
         RestrictPublicBuckets: true
 
 Outputs:
-  BucketName:
+  FrontendBucketName:
     Description: Name of the S3 bucket
     Value: !Ref WebAppBucket
+  FrontendBucketDomainName:
+    Description: S3 bucket domain name
+    Value: !GetAtt WebAppBucket.DomainName
   LogsBucketName:
     Description: Name of the S3 bucket that will be used to store CloudFront logs
     Value: !Ref CloudFrontLogsBucket
+  LogsBucketArn:
+    Description: Logs S3 bucket ARN
+    Value: !GetAtt CloudFrontLogsBucket.Arn

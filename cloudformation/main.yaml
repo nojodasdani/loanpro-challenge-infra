@@ -12,41 +12,47 @@ Parameters:
     Description: Environment (e.g., dev, prod) to suffix resource names
     Default: "dev"
 
+  BucketUrl:
+    Type: String
+    Description: Bucket where the CloudFormation templates are going to be uploaded
+    Default: "loanpro-challenge-iac-artifacts"
+
 Resources:
   OriginAccessIdentityStack:
     Type: "AWS::CloudFormation::Stack"
     Properties:
-      TemplateURL: "./oai.yaml"
+      TemplateURL: !Sub "${BucketUrl}/oai.yaml"
 
   S3BucketStack:
     Type: "AWS::CloudFormation::Stack"
     Properties:
-      TemplateURL: "./s3.yaml"
+      TemplateURL: !Sub "${BucketUrl}/s3.yaml"
       Parameters:
         Project: !Ref Project
         Environment: !Ref Environment
-        CloudFrontOAIArn: !GetAtt OriginAccessIdentityStack.Outputs.CloudFrontOAIArn
+        CloudFrontOAI: !GetAtt OriginAccessIdentityStack.Outputs.CloudFrontOAIId
 
   CloudFrontStack:
     Type: "AWS::CloudFormation::Stack"
     Properties:
-      TemplateURL: "./cloudfront.yaml"
+      TemplateURL: !Sub "${BucketUrl}/cloudfront.yaml"
       Parameters:
         Project: !Ref Project
         Environment: !Ref Environment
-        S3BucketName: !GetAtt S3BucketStack.Outputs.BucketName
-        CloudFrontOAIId: !GetAtt OriginAccessIdentityStack.Outputs.CloudFrontOAIId
+        S3BucketName: !GetAtt S3BucketStack.Outputs.FrontendBucketName
+        S3BucketDomainName: !GetAtt S3BucketStack.Outputs.FrontendBucketDomainName
+        S3LogsBucketArn: !GetAtt S3BucketStack.Outputs.LogsBucketArn
+        CloudFrontOAI: !GetAtt OriginAccessIdentityStack.Outputs.CloudFrontOAIId
 
-  DynamoDBStack:
-    Type: "AWS::CloudFormation::Stack"
-    Properties:
-      TemplateURL: "./dynamo.yaml"
-      Parameters:
-        Project: !Ref Project
-        Environment: !Ref Environment
+  # DynamoDBStack:
+  #   Type: "AWS::CloudFormation::Stack"
+  #   Properties:
+  #     TemplateURL: !Sub "${BucketUrl}/dynamo.yaml"
+  #     Parameters:
+  #       Project: !Ref Project
+  #       Environment: !Ref Environment
 
 Outputs:
-  # Consolidated Outputs from Nested Stacks
   S3BucketName:
     Description: Name of the S3 bucket used to store the web app
     Value: !GetAtt S3BucketStack.Outputs.BucketName
@@ -59,13 +65,13 @@ Outputs:
     Description: Origin Access Identity ID for CloudFront
     Value: !GetAtt OriginAccessIdentityStack.Outputs.CloudFrontOAIId
 
-  DynamoDBTableName:
-    Description: Name of the DynamoDB table
-    Value: !GetAtt DynamoDBStack.Outputs.TableName
+  # DynamoDBTableName:
+  #   Description: Name of the DynamoDB table
+  #   Value: !GetAtt DynamoDBStack.Outputs.TableName
 
-  DynamoDBTableArn:
-    Description: ARN of the DynamoDB table
-    Value: !GetAtt DynamoDBStack.Outputs.TableArn
+  # DynamoDBTableArn:
+  #   Description: ARN of the DynamoDB table
+  #   Value: !GetAtt DynamoDBStack.Outputs.TableArn
 
   WAFId:
     Description: ID of the Web Application Firewall associated with CloudFront
