@@ -1,0 +1,31 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: LoanPro Chanllenge CloudFormation stack
+
+Parameters:
+  Project:
+    Type: String
+    Description: Project name to prefix resource names
+    Default: "loanpro-challenge"
+
+  Environment:
+    Type: String
+    Description: Environment (e.g., dev, prod) to suffix resource names
+    Default: "dev"
+
+  BucketUrl:
+    Type: String
+    Description: Bucket where the CloudFormation templates are going to be uploaded
+
+Resources:
+  DynamoDBStack:
+    Type: "AWS::CloudFormation::Stack"
+    Properties:
+      TemplateURL: !Sub "${BucketUrl}/dynamo.yaml"
+      Parameters:
+        Project: !Ref Project
+        Environment: !Ref Environment
+
+Outputs:
+  DynamoDBTableName:
+    Description: Name of the DynamoDB table
+    Value: !GetAtt DynamoDBStack.Outputs.TableName

@@ -44,14 +44,6 @@ Resources:
         S3LogsBucketArn: !GetAtt S3BucketStack.Outputs.LogsBucketArn
         CloudFrontOAI: !GetAtt OriginAccessIdentityStack.Outputs.CloudFrontOAIId
 
-  # DynamoDBStack:
-  #   Type: "AWS::CloudFormation::Stack"
-  #   Properties:
-  #     TemplateURL: !Sub "${BucketUrl}/dynamo.yaml"
-  #     Parameters:
-  #       Project: !Ref Project
-  #       Environment: !Ref Environment
-
 Outputs:
   S3BucketName:
     Description: Name of the S3 bucket used to store the web app
@@ -64,14 +56,6 @@ Outputs:
   CloudFrontOAIId:
     Description: Origin Access Identity ID for CloudFront
     Value: !GetAtt OriginAccessIdentityStack.Outputs.CloudFrontOAIId
-
-  # DynamoDBTableName:
-  #   Description: Name of the DynamoDB table
-  #   Value: !GetAtt DynamoDBStack.Outputs.TableName
-
-  # DynamoDBTableArn:
-  #   Description: ARN of the DynamoDB table
-  #   Value: !GetAtt DynamoDBStack.Outputs.TableArn
 
   WAFId:
     Description: ID of the Web Application Firewall associated with CloudFront

@@ -1,41 +1,43 @@
 #!/bin/bash
+source set_vars.sh
 
-# Parameters
-PROJECT_NAME="loanpro-challenge"
-ENVIRONMENT="dev"
-TEMPLATE_FILE="main.yaml"
-REGION="ca-central-1"
-# NOTE: Change next value to an existing Bucket where the cfn templates will be uploaded
-# NOTE2: Deployment and bucket regions region must be the same and should be different than us-east-1
-BUCKET_NAME="loanpro-challenge-iac-artifacts"
-BUCKET_URL="https://$BUCKET_NAME.s3.$REGION.amazonaws.com"
+REGIONS=("us-east-1" "ca-central-1")
 
-# Validate the CloudFormation template
-echo "Validating CloudFormation templates..."
-aws cloudformation validate-template --template-body file://../cloudformation/$TEMPLATE_FILE
+for REGION in "${REGIONS[@]}"; do
+    echo "Starting deployment for region: $REGION"
 
-if [ $? -ne 0 ]; then
-    echo "Template validation failed."
-    exit 1
-fi
-echo "Template validation succeeded."
+    # Validate the CloudFormation template
+    echo "Validating CloudFormation template for $REGION..."
 
-# Upload local files to S3 bucket for deployment
-aws s3 sync ../cloudformation s3://$BUCKET_NAME --exact-timestamps
+    aws cloudformation validate-template --template-body file://../cloudformation/$REGION/$TEMPLATE_FILE
 
-# Deploy the CloudFormation stack
-echo "Deploying CloudFormation stack..."
-    # --template-file s3://$BUCKET_NAME/$TEMPLATE_FILE \
-aws cloudformation deploy \
-    --template-file ../cloudformation/$TEMPLATE_FILE \
-    --stack-name $PROJECT_NAME \
-    --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
-    --region $REGION \
-    --parameter-overrides Project="$PROJECT_NAME" Environment="$ENVIRONMENT" BucketUrl="$BUCKET_URL"
+    if [ $? -ne 0 ]; then
+        echo "$REGION Template validation failed."
+        exit 1
+    fi
 
-if [ $? -eq 0 ]; then
-    echo "CloudFormation stack deployed successfully."
-else
-    echo "CloudFormation stack deployment failed."
-    exit 1
-fi
+    echo "$REGION Template validation succeeded."
+
+    # Upload local files to S3 bucket for deployment
+    echo "Uploading files to S3 bucket for $REGION..."
+    aws s3 sync ../cloudformation/$REGION s3://$BUCKET_NAME/$REGION --exact-timestamps
+
+    # Deploy the CloudFormation stack
+    echo "Deploying CloudFormation stack for $REGION..."
+
+    aws cloudformation deploy \
+        --template-file ../cloudformation/$REGION/$TEMPLATE_FILE \
+        --stack-name $PROJECT_NAME \
+        --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
+        --region $REGION \
+        --parameter-overrides Project="$PROJECT_NAME" Environment="$ENVIRONMENT" BucketUrl="$BUCKET_DOMAIN_NAME/$REGION"
+
+    if [ $? -eq 0 ]; then
+        echo "CloudFormation stack deployed successfully in $REGION."
+    else
+        echo "CloudFormation stack deployment failed in $REGION."
+        exit 1
+    fi
+done
+
+echo "Deployment completed for all specified regions."
