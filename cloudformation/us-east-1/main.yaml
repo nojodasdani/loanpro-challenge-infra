@@ -56,7 +56,3 @@ Outputs:
   CloudFrontOAIId:
     Description: Origin Access Identity ID for CloudFront
     Value: !GetAtt OriginAccessIdentityStack.Outputs.CloudFrontOAIId
-
-  WAFId:
-    Description: ID of the Web Application Firewall associated with CloudFront
-    Value: !GetAtt CloudFrontStack.Outputs.WebACLId
