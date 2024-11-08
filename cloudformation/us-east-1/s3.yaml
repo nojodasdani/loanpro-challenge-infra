@@ -42,6 +42,9 @@ Resources:
     Type: "AWS::S3::Bucket"
     Properties:
       BucketName: !Sub "${Project}-${Environment}-cloudfront-logs"
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerPreferred
       PublicAccessBlockConfiguration:
         BlockPublicAcls: true
         BlockPublicPolicy: true
@@ -58,6 +61,6 @@ Outputs:
   LogsBucketName:
     Description: Name of the S3 bucket that will be used to store CloudFront logs
     Value: !Ref CloudFrontLogsBucket
-  LogsBucketArn:
-    Description: Logs S3 bucket ARN
-    Value: !GetAtt CloudFrontLogsBucket.Arn
+  LogsBucketDomainName:
+    Description: S3 bucket domain name
+    Value: !GetAtt CloudFrontLogsBucket.DomainName

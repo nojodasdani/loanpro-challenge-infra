@@ -13,10 +13,10 @@ Parameters:
     Description: Name of the S3 bucket to serve via CloudFront
   S3BucketDomainName:
     Type: String
-    Description: Domain Name of the S3 bucket to serve
-  S3LogsBucketArn:
+    Description: Domain Name of the S3 bucket to serve web app
+  S3LogsBucketDomainName:
     Type: String
-    Description: Name of the S3 bucket to save CloudFront logs
+    Description: Domain Name of the S3 bucket that stores logs
   CloudFrontOAI:
     Type: String
     Description: The Origin Access Identity ID for the CloudFront distribution to access the S3 bucket
@@ -54,7 +54,7 @@ Resources:
         Enabled: true
         HttpVersion: http2
         Logging:
-          Bucket: !Ref S3LogsBucketArn
+          Bucket: !Ref S3LogsBucketDomainName
         Origins:
           - DomainName: !Ref S3BucketDomainName
             Id: S3Origin

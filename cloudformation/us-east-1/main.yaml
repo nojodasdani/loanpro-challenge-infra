@@ -41,7 +41,7 @@ Resources:
         Environment: !Ref Environment
         S3BucketName: !GetAtt S3BucketStack.Outputs.FrontendBucketName
         S3BucketDomainName: !GetAtt S3BucketStack.Outputs.FrontendBucketDomainName
-        S3LogsBucketArn: !GetAtt S3BucketStack.Outputs.LogsBucketArn
+        S3LogsBucketDomainName: !GetAtt S3BucketStack.Outputs.LogsBucketDomainName
         CloudFrontOAI: !GetAtt OriginAccessIdentityStack.Outputs.CloudFrontOAIId
 
 Outputs:
